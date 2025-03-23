@@ -1,19 +1,77 @@
-# Documentation Menu Crawler
+# Crawl4AI Documentation Scraper
 
-A powerful Python script designed to extract all menu links from documentation websites, with special focus on handling nested menus and dynamic content. Built using the Crawl4AI library for efficient web crawling.
+Keep your dependency documentation lean, current, and AI-ready. This toolkit helps you extract clean, focused documentation from any framework or library website, perfect for both human readers and LLM consumption.
+
+## Why This Tool?
+
+In today's fast-paced development environment, you need:
+- 📚 Quick access to dependency documentation without the bloat
+- 🤖 Documentation in a format that's ready for RAG systems and LLMs
+- 🎯 Focused content without navigation elements, ads, or irrelevant sections
+- ⚡ Fast, efficient way to keep documentation up-to-date
+- 🧹 Clean Markdown output for easy integration with documentation tools
+
+Traditional web scraping often gives you everything - including navigation menus, footers, ads, and other noise. This toolkit is specifically designed to extract only what matters: the actual documentation content.
+
+### Key Benefits
+
+1. **Clean Markdown Output**
+   - Pure documentation content without HTML noise
+   - Perfect for documentation sites, wikis, and knowledge bases
+   - Ideal format for LLM training and RAG systems
+
+2. **Smart Content Extraction**
+   - Automatically identifies main content areas
+   - Strips away navigation, ads, and irrelevant sections
+   - Preserves code blocks and technical formatting
+
+3. **Flexible Crawling Strategies**
+   - Single page for quick reference docs
+   - Multi-page for comprehensive library documentation
+   - Sitemap-based for complete framework coverage
+   - Menu-based for structured documentation hierarchies
+
+4. **LLM and RAG Ready**
+   - Structured output in JSON format
+   - Clean text suitable for embeddings
+   - Preserved code blocks for technical accuracy
+
+A comprehensive Python toolkit for scraping documentation websites using different crawling strategies. Built using the Crawl4AI library for efficient web crawling.
 
 [![Powered by Crawl4AI](https://img.shields.io/badge/Powered%20by-Crawl4AI-blue?style=flat-square)](https://github.com/unclecode/crawl4ai)
 
 ## Features
 
-- 🚀 Single-page crawling optimization
+### Core Features
+- 🚀 Multiple crawling strategies
 - 📑 Automatic nested menu expansion
 - 🔄 Handles dynamic content and lazy-loaded elements
-- 🎯 Configurable menu selectors
+- 🎯 Configurable selectors
 - 💾 Structured JSON output
 - 🎨 Colorful terminal feedback
 - 🔍 Smart URL processing
 - ⚡ Asynchronous execution
+
+### Available Crawlers
+1. **Single URL Crawler** (`single_url_crawler.py`)
+   - Extracts content from a single documentation page
+   - Perfect for targeted content extraction
+   - Configurable content selectors
+
+2. **Multi URL Crawler** (`multi_url_crawler.py`)
+   - Processes multiple URLs in parallel
+   - Efficient batch processing
+   - Shared browser session for better performance
+
+3. **Sitemap Crawler** (`sitemap_crawler.py`)
+   - Automatically discovers and crawls sitemap.xml
+   - Supports recursive sitemap parsing
+   - Handles gzipped sitemaps
+
+4. **Menu Crawler** (`menu_crawler.py`)
+   - Extracts all menu links from documentation
+   - Handles nested and dynamic menus
+   - Smart menu expansion
 
 ## Requirements
 
@@ -41,67 +99,123 @@ pip install -r requirements.txt
 
 ## Usage
 
-1. Configure the target URL:
-   Open `menu_crawler.py` and modify the `BASE_URL` constant to your target documentation site:
-   ```python
-   BASE_URL = "https://your-docs-site.com/"
-   ```
+### 1. Single URL Crawler
 
-2. Run the script:
-   ```bash
-   python menu_crawler.py
-   ```
+```bash
+python single_url_crawler.py --url "https://docs.example.com/page"
+```
 
-3. Results will be saved in the `scraped_docs` directory with a filename format:
-   ```
-   {domain}_{path}_menu_links_{timestamp}.json
-   ```
+Options:
+- `--url`: Target documentation URL
+- `--selectors`: Custom CSS selectors (optional)
+- `--output`: Custom output path (optional)
+
+Output format:
+```json
+{
+    "url": "https://docs.example.com/page",
+    "title": "Page Title",
+    "content": "Extracted content...",
+    "metadata": {
+        "timestamp": "2024-01-01T12:00:00",
+        "word_count": 1500
+    }
+}
+```
+
+### 2. Multi URL Crawler
+
+```bash
+python multi_url_crawler.py --urls urls.txt
+```
+
+Options:
+- `--urls`: Path to text file containing URLs (one per line)
+- `--concurrent`: Number of concurrent crawls (default: 5)
+- `--output-dir`: Custom output directory (optional)
+
+Example urls.txt:
+```text
+https://docs.example.com/page1
+https://docs.example.com/page2
+https://docs.example.com/page3
+```
+
+### 3. Sitemap Crawler
+
+```bash
+python sitemap_crawler.py --domain "https://docs.example.com"
+```
+
+Options:
+- `--domain`: Root domain to crawl
+- `--max-depth`: Maximum sitemap recursion depth (optional)
+- `--patterns`: URL patterns to include (optional)
+
+### 4. Menu Crawler
+
+```bash
+python menu_crawler.py --url "https://docs.example.com"
+```
+
+Options:
+- `--url`: Documentation site URL
+- `--selectors`: Custom menu selectors (optional)
 
 ## Configuration
 
-### Menu Selectors
-The script uses various CSS selectors to identify menu links. You can modify the `MENU_SELECTORS` list in the script:
+### Common Browser Configuration
+All crawlers use a common browser configuration that can be adjusted:
 
 ```python
-MENU_SELECTORS = [
-    "nav a",                    # General navigation links
-    "[role='navigation'] a",    # Role-based navigation
-    ".sidebar a",               # Common sidebar class
-    "[class*='nav'] a",        # Classes containing 'nav'
-    "[class*='menu'] a",       # Classes containing 'menu'
-]
-```
-
-### Browser Configuration
-You can adjust browser settings by modifying the `browser_config` in the `DocsMenuCrawler` class:
-
-```python
-self.browser_config = BrowserConfig(
+browser_config = BrowserConfig(
     headless=True,
     viewport_width=1920,
     viewport_height=1080
 )
 ```
 
-## Output Format
+### Custom Selectors
+Each crawler supports custom CSS selectors:
 
-The script generates a JSON file with the following structure:
+```python
+# Menu selectors
+MENU_SELECTORS = [
+    "nav a",                    # General navigation links
+    "[role='navigation'] a",    # Role-based navigation
+    ".sidebar a",               # Common sidebar class
+]
 
-```json
-{
-    "start_url": "https://your-docs-site.com/",
-    "total_links_found": 42,
-    "menu_links": [
-        "https://your-docs-site.com/page1",
-        "https://your-docs-site.com/page2",
-        ...
-    ]
-}
+# Content selectors
+CONTENT_SELECTORS = [
+    "article",                  # Main content
+    ".documentation",           # Documentation content
+    ".content-body",           # Content body
+]
+```
+
+## Output Directory Structure
+
+```
+scraped_docs/
+├── single/
+│   └── domain_path_timestamp.json
+├── multi/
+│   └── batch_timestamp/
+│       ├── page1.json
+│       ├── page2.json
+│       └── summary.json
+├── sitemap/
+│   └── domain_timestamp/
+│       ├── urls.json
+│       └── pages/
+└── menu/
+    └── domain_menu_links_timestamp.json
 ```
 
 ## Error Handling
 
-The script includes comprehensive error handling with colored terminal output:
+All crawlers include comprehensive error handling with colored terminal output:
 - 🟢 Green: Success messages
 - 🔵 Cyan: Processing status
 - 🟡 Yellow: Warnings
