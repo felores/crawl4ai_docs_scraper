@@ -1,0 +1,4 @@
+crawl4ai
+aiohttp
+termcolor
+playwright
