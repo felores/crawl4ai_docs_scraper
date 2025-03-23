@@ -15,59 +15,138 @@ import re
 BASE_URL = "https://developers.cloudflare.com/agents/"
 OUTPUT_DIR = "scraped_docs"
 MENU_SELECTORS = [
-    "nav a",  # General navigation links
-    "[role='navigation'] a",  # Role-based navigation
-    ".sidebar a",  # Common sidebar class
-    "[class*='nav'] a",  # Classes containing 'nav'
-    "[class*='menu'] a",  # Classes containing 'menu'
+    # Traditional documentation selectors
+    "nav a",                                  # General navigation links
+    "[role='navigation'] a",                  # Role-based navigation
+    ".sidebar a",                             # Common sidebar class
+    "[class*='nav'] a",                       # Classes containing 'nav'
+    "[class*='menu'] a",                      # Classes containing 'menu'
+    "aside a",                                # Side navigation
+    ".toc a",                                 # Table of contents
+    
+    # Modern framework selectors (Mintlify, Docusaurus, etc)
+    "[class*='sidebar'] [role='navigation'] [class*='group'] a",  # Navigation groups
+    "[class*='sidebar'] [role='navigation'] [class*='item'] a",   # Navigation items
+    "[class*='sidebar'] [role='navigation'] [class*='link'] a",   # Direct links
+    "[class*='sidebar'] [role='navigation'] div[class*='text']",  # Text items
+    "[class*='sidebar'] [role='navigation'] [class*='nav-item']", # Nav items
+    
+    # Additional common patterns
+    "[class*='docs-'] a",                     # Documentation-specific links
+    "[class*='navigation'] a",                # Navigation containers
+    "[class*='toc'] a",                       # Table of contents variations
+    ".docNavigation a",                       # Documentation navigation
+    "[class*='menu-item'] a",                 # Menu items
+    
+    # Client-side rendered navigation
+    "[class*='sidebar'] a[href]",             # Any link in sidebar
+    "[class*='sidebar'] [role='link']",       # ARIA role links
+    "[class*='sidebar'] [role='menuitem']",   # Menu items
+    "[class*='sidebar'] [role='treeitem']",   # Tree navigation items
+    "[class*='sidebar'] [onclick]",           # Elements with click handlers
+    "[class*='sidebar'] [class*='link']",     # Elements with link classes
+    "a[href^='/']",                           # Root-relative links
+    "a[href^='./']",                          # Relative links
+    "a[href^='../']"                          # Parent-relative links
 ]
 
 # JavaScript to expand nested menus
 EXPAND_MENUS_JS = """
 (async () => {
+    // Wait for client-side rendering to complete
+    await new Promise(r => setTimeout(r, 2000));
+    
     // Function to expand all menu items
     async function expandAllMenus() {
-        // Common selectors for expandable menu items
+        // Combined selectors for expandable menu items
         const expandableSelectors = [
-            'button[aria-expanded="false"]',  // ARIA standard
-            '.expandable:not(.expanded)',     // Common class pattern
-            '[class*="collapse"]:not(.show)', // Bootstrap-style
-            '.closed',                        // Simple state class
-            '[class*="menu-item-has-children"]' // WordPress-style
+            // Previous selectors...
+            // Additional selectors for client-side rendered menus
+            '[class*="sidebar"] button',
+            '[class*="sidebar"] [role="button"]',
+            '[class*="sidebar"] [aria-controls]',
+            '[class*="sidebar"] [aria-expanded]',
+            '[class*="sidebar"] [data-state]',
+            '[class*="sidebar"] [class*="expand"]',
+            '[class*="sidebar"] [class*="toggle"]',
+            '[class*="sidebar"] [class*="collapse"]'
         ];
         
         let expanded = 0;
         let lastExpanded = -1;
+        let attempts = 0;
+        const maxAttempts = 10;  // Increased attempts for client-side rendering
         
-        // Keep trying to expand until no new items are expanded
-        while (expanded !== lastExpanded) {
+        while (expanded !== lastExpanded && attempts < maxAttempts) {
             lastExpanded = expanded;
+            attempts++;
             
             for (const selector of expandableSelectors) {
                 const elements = document.querySelectorAll(selector);
                 for (const el of elements) {
                     try {
-                        // Try different methods of expanding
+                        // Click the element
                         el.click();
+                        
+                        // Try multiple expansion methods
                         el.setAttribute('aria-expanded', 'true');
-                        el.classList.add('expanded', 'show');
+                        el.setAttribute('data-state', 'open');
+                        el.classList.add('expanded', 'show', 'active');
                         el.classList.remove('collapsed', 'closed');
+                        
+                        // Handle parent groups - multiple patterns
+                        ['[class*="group"]', '[class*="parent"]', '[class*="submenu"]'].forEach(parentSelector => {
+                            let parent = el.closest(parentSelector);
+                            if (parent) {
+                                parent.setAttribute('data-state', 'open');
+                                parent.setAttribute('aria-expanded', 'true');
+                                parent.classList.add('expanded', 'show', 'active');
+                            }
+                        });
+                        
                         expanded++;
+                        await new Promise(r => setTimeout(r, 200));  // Increased delay between clicks
                     } catch (e) {
                         continue;
                     }
                 }
             }
             
-            // Wait a bit for any animations/transitions
-            await new Promise(r => setTimeout(r, 100));
+            // Wait longer between attempts for client-side rendering
+            await new Promise(r => setTimeout(r, 500));
         }
+        
+        // After expansion, try to convert text items to links if needed
+        const textSelectors = [
+            '[class*="sidebar"] [role="navigation"] [class*="text"]',
+            '[class*="menu-item"]',
+            '[class*="nav-item"]',
+            '[class*="sidebar"] [role="menuitem"]',
+            '[class*="sidebar"] [role="treeitem"]'
+        ];
+        
+        textSelectors.forEach(selector => {
+            const textItems = document.querySelectorAll(selector);
+            textItems.forEach(item => {
+                if (!item.querySelector('a') && item.textContent && item.textContent.trim()) {
+                    const text = item.textContent.trim();
+                    // Only create link if it doesn't already exist
+                    if (!Array.from(item.children).some(child => child.tagName === 'A')) {
+                        const link = document.createElement('a');
+                        link.href = '#' + text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                        link.textContent = text;
+                        item.appendChild(link);
+                    }
+                }
+            });
+        });
         
         return expanded;
     }
     
-    // Execute the expansion
     const expandedCount = await expandAllMenus();
+    // Final wait to ensure all client-side updates are complete
+    await new Promise(r => setTimeout(r, 1000));
     return expandedCount;
 })();
 """
@@ -129,7 +208,8 @@ class DocsMenuCrawler:
         self.browser_config = BrowserConfig(
             headless=True,
             viewport_width=1920,
-            viewport_height=1080
+            viewport_height=1080,
+            java_script_enabled=True  # Ensure JavaScript is enabled
         )
         
         # Create extraction strategy for menu links
@@ -145,18 +225,47 @@ class DocsMenuCrawler:
                 {
                     "name": "text",
                     "type": "text"
+                },
+                {
+                    "name": "onclick",
+                    "type": "attribute",
+                    "attribute": "onclick"
+                },
+                {
+                    "name": "role",
+                    "type": "attribute",
+                    "attribute": "role"
                 }
             ]
         }
         extraction_strategy = JsonCssExtractionStrategy(extraction_schema)
         
-        # Configure crawler settings
+        # Configure crawler settings with proper wait conditions
         self.crawler_config = CrawlerRunConfig(
             extraction_strategy=extraction_strategy,
             cache_mode=CacheMode.BYPASS,  # Don't use cache for fresh results
             verbose=True,  # Enable detailed logging
             wait_for_images=True,  # Ensure lazy-loaded content is captured
-            js_code=[EXPAND_MENUS_JS]  # Add JavaScript to expand nested menus
+            js_code=[
+                # Initial wait for client-side rendering
+                "await new Promise(r => setTimeout(r, 2000));",
+                EXPAND_MENUS_JS
+            ],  # Add JavaScript to expand nested menus
+            wait_for="""js:() => {
+                // Wait for sidebar and its content to be present
+                const sidebar = document.querySelector('[class*="sidebar"]');
+                if (!sidebar) return false;
+                
+                // Check if we have navigation items
+                const hasNavItems = sidebar.querySelectorAll('a').length > 0;
+                if (hasNavItems) return true;
+                
+                // If no nav items yet, check for loading indicators
+                const isLoading = document.querySelector('[class*="loading"]') !== null;
+                return !isLoading;  // Return true if not loading anymore
+            }""",
+            session_id="menu_crawler",  # Use a session to maintain state
+            js_only=False  # We want full page load first
         )
         
         # Create output directory if it doesn't exist
