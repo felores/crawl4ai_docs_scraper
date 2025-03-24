@@ -8,6 +8,8 @@ from crawl4ai.extraction_strategy import JsonCssExtractionStrategy
 from urllib.parse import urljoin, urlparse
 import json
 import os
+import sys
+import argparse
 from datetime import datetime
 import re
 
@@ -294,6 +296,9 @@ class DocsMenuCrawler:
 
                 links = set()
                 
+                # Parse the base domain from start_url
+                base_domain = urlparse(self.start_url).netloc
+                
                 # Add the base URL first (without trailing slash for consistency)
                 base_url = self.start_url.rstrip('/')
                 links.add(base_url)
@@ -313,11 +318,12 @@ class DocsMenuCrawler:
                                 
                             # Convert relative URLs to absolute
                             absolute_url = urljoin(self.start_url, href)
+                            parsed_url = urlparse(absolute_url)
                             
-                            # Skip anchor links and ensure it's an internal doc link
-                            if (absolute_url.startswith(self.start_url) and 
+                            # Accept internal links (same domain) that aren't anchors
+                            if (parsed_url.netloc == base_domain and 
                                 not href.startswith('#') and 
-                                '#' not in absolute_url):  # Removed base URL exclusion
+                                '#' not in absolute_url):
                                 
                                 # Remove any trailing slashes for consistency
                                 absolute_url = absolute_url.rstrip('/')
@@ -325,7 +331,7 @@ class DocsMenuCrawler:
                                 links.add(absolute_url)
                                 print(colored(f"Found link: {text} -> {absolute_url}", "green"))
                             else:
-                                print(colored(f"Skipping anchor or external link: {text} -> {href}", "yellow"))
+                                print(colored(f"Skipping external or anchor link: {text} -> {href}", "yellow"))
                                 
                     except json.JSONDecodeError as e:
                         print(colored(f"Error parsing extracted content: {str(e)}", "red"))
@@ -383,11 +389,26 @@ class DocsMenuCrawler:
             print(colored(f"Error during crawling: {str(e)}", "red"))
 
 async def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Extract menu links from a documentation website')
+    parser.add_argument('url', type=str, help='Documentation site URL to crawl')
+    parser.add_argument('--selectors', type=str, nargs='+', help='Custom menu selectors (optional)')
+    args = parser.parse_args()
+
     try:
-        crawler = DocsMenuCrawler(BASE_URL)
+        # Update menu selectors if custom ones provided
+        if args.selectors:
+            print(colored("Using custom menu selectors:", "cyan"))
+            for selector in args.selectors:
+                print(colored(f"  {selector}", "yellow"))
+            global MENU_SELECTORS
+            MENU_SELECTORS = args.selectors
+
+        crawler = DocsMenuCrawler(args.url)
         await crawler.crawl()
     except Exception as e:
         print(colored(f"Error in main: {str(e)}", "red"))
+        sys.exit(1)
 
 if __name__ == "__main__":
     print(colored("Starting documentation menu crawler...", "cyan"))

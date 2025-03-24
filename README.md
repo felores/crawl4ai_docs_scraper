@@ -176,22 +176,20 @@ https://docs.example.com/page3
 ### 3. Sitemap Crawler
 
 ```bash
-python sitemap_crawler.py --domain "https://docs.example.com"
+python sitemap_crawler.py https://docs.example.com/sitemap.xml
 ```
 
 Options:
-- `--domain`: Root domain to crawl
 - `--max-depth`: Maximum sitemap recursion depth (optional)
 - `--patterns`: URL patterns to include (optional)
 
 ### 4. Menu Crawler
 
 ```bash
-python menu_crawler.py --url "https://docs.example.com"
+python menu_crawler.py https://docs.example.com
 ```
 
 Options:
-- `--url`: Documentation site URL
 - `--selectors`: Custom menu selectors (optional)
 
 The menu crawler now saves its output to the `input_files` directory, making it ready for immediate use with the multi-url crawler. The output JSON has this format:
@@ -245,4 +243,4 @@ This project uses [Crawl4AI](https://github.com/unclecode/crawl4ai) for web data
 ## Acknowledgments
 
 - Built with [Crawl4AI](https://github.com/unclecode/crawl4ai)
-- Uses [termcolor](https://pypi.org/project/termcolor/) for colorful terminal output 
+- Uses [termcolor](https://pypi.org/project/termcolor/) for colorful terminal output

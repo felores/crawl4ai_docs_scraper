@@ -4,11 +4,13 @@ import asyncio
 import re
 import xml.etree.ElementTree as ET
 import aiohttp
+import argparse
 from typing import List, Optional, Dict
 from datetime import datetime
 from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
 from crawl4ai.content_filter_strategy import PruningContentFilter
+from termcolor import colored
 
 class MultiUrlCrawler:
     def __init__(self, verbose: bool = True):
@@ -245,24 +247,50 @@ class MultiUrlCrawler:
         return main_domain
 
 async def main():
-    # Example usage with sitemap
-    sitemap_url = "https://docs.literalai.com/sitemap.xml"  # Example sitemap URL
-    
-    crawler = MultiUrlCrawler(verbose=True)
-    
-    # Fetch URLs from sitemap
-    urls = await crawler.fetch_sitemap(sitemap_url)
-    
-    if not urls:
-        print("No URLs found in sitemap")
-        return
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Crawl a sitemap and generate markdown documentation')
+    parser.add_argument('sitemap_url', type=str, help='URL of the sitemap (e.g., https://docs.example.com/sitemap.xml)')
+    parser.add_argument('--max-depth', type=int, default=10, help='Maximum sitemap recursion depth')
+    parser.add_argument('--patterns', type=str, nargs='+', help='URL patterns to include (e.g., "/docs/*" "/guide/*")')
+    args = parser.parse_args()
+
+    try:
+        print(colored(f"\nFetching sitemap: {args.sitemap_url}", "cyan"))
         
-    # Crawl the URLs
-    results = await crawler.crawl(urls)
-    
-    # Save results to markdown file with dynamic name
-    filename_prefix = crawler.get_filename_prefix(sitemap_url)
-    crawler.save_markdown_content(results, filename_prefix)
+        # Initialize crawler
+        crawler = MultiUrlCrawler(verbose=True)
+        
+        # Fetch URLs from sitemap
+        urls = await crawler.fetch_sitemap(args.sitemap_url)
+        
+        if not urls:
+            print(colored("No URLs found in sitemap", "red"))
+            sys.exit(1)
+            
+        # Filter URLs by pattern if specified
+        if args.patterns:
+            print(colored("\nFiltering URLs by patterns:", "cyan"))
+            for pattern in args.patterns:
+                print(colored(f"  {pattern}", "yellow"))
+            
+            filtered_urls = []
+            for url in urls:
+                if any(pattern.replace('*', '') in url for pattern in args.patterns):
+                    filtered_urls.append(url)
+            
+            print(colored(f"\nFound {len(filtered_urls)} URLs matching patterns", "green"))
+            urls = filtered_urls
+        
+        # Crawl the URLs
+        results = await crawler.crawl(urls)
+        
+        # Save results to markdown file with dynamic name
+        filename_prefix = crawler.get_filename_prefix(args.sitemap_url)
+        crawler.save_markdown_content(results, filename_prefix)
+        
+    except Exception as e:
+        print(colored(f"Error during crawling: {str(e)}", "red"))
+        sys.exit(1)
 
 if __name__ == "__main__":
     asyncio.run(main()) 
