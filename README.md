@@ -110,13 +110,13 @@ pip install -r requirements.txt
 ### 1. Single URL Crawler
 
 ```bash
-python single_url_crawler.py --url "https://docs.example.com/page"
+python single_url_crawler.py https://docs.example.com/page
 ```
 
-Options:
-- `--url`: Target documentation URL
-- `--selectors`: Custom CSS selectors (optional)
-- `--output`: Custom output path (optional)
+Arguments:
+- URL: Target documentation URL (required, first argument)
+
+Note: Use quotes only if your URL contains special characters or spaces.
 
 Output format (Markdown):
 ```markdown
@@ -138,18 +138,22 @@ def example():
 
 ```bash
 # Using a text file with URLs
-python multi_url_crawler.py --urls urls.txt
+python multi_url_crawler.py urls.txt
 
 # Using JSON output from menu crawler
-python multi_url_crawler.py --urls menu_links.json
+python multi_url_crawler.py menu_links.json
 
 # Using custom output prefix
-python multi_url_crawler.py --urls menu_links.json --output-prefix custom_name
+python multi_url_crawler.py menu_links.json --output-prefix custom_name
 ```
 
-Options:
-- `--urls`: Path to file containing URLs (can be .txt with one URL per line or .json from menu crawler)
-- `--output-prefix`: Custom prefix for output markdown file (optional). If not specified, the prefix will be automatically generated from the first successfully crawled URL
+Arguments:
+- URLs file: Path to file containing URLs (required, first argument)
+  - Can be .txt with one URL per line
+  - Or .json from menu crawler output
+- `--output-prefix`: Custom prefix for output markdown file (optional)
+
+Note: Use quotes only if your file path contains spaces.
 
 Output filename format:
 - Without `--output-prefix`: `domain_path_docs_content_timestamp.md` (e.g., `cloudflare_agents_docs_content_20240323_223656.md`)

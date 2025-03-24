@@ -254,18 +254,13 @@ class MultiUrlCrawler:
 
 async def main():
     parser = argparse.ArgumentParser(description='Crawl multiple URLs and generate markdown documentation')
-    parser.add_argument('--urls', type=str, help='Path to file containing URLs (either .txt or .json)')
+    parser.add_argument('urls_file', type=str, help='Path to file containing URLs (either .txt or .json)')
     parser.add_argument('--output-prefix', type=str, help='Prefix for output markdown file (optional)')
     args = parser.parse_args()
 
-    if not args.urls:
-        print(colored("Error: Please provide a file containing URLs using --urls", "red"))
-        parser.print_help()
-        sys.exit(1)
-
     try:
         # Load URLs from file
-        urls = load_urls_from_file(args.urls)
+        urls = load_urls_from_file(args.urls_file)
         
         if not urls:
             print(colored("Error: No URLs found in the input file", "red"))

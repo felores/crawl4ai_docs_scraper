@@ -111,7 +111,7 @@ def save_markdown_content(content: str, url: str) -> str:
 async def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Crawl a single URL and generate markdown documentation')
-    parser.add_argument('--url', type=str, required=True, help='Target documentation URL to crawl')
+    parser.add_argument('url', type=str, help='Target documentation URL to crawl')
     args = parser.parse_args()
 
     try:
