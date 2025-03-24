@@ -137,19 +137,40 @@ def example():
 ### 2. Multi URL Crawler
 
 ```bash
+# Using a text file with URLs
 python multi_url_crawler.py --urls urls.txt
+
+# Using JSON output from menu crawler
+python multi_url_crawler.py --urls menu_links.json
+
+# Using custom output prefix
+python multi_url_crawler.py --urls menu_links.json --output-prefix custom_name
 ```
 
 Options:
-- `--urls`: Path to text file containing URLs (one per line)
-- `--concurrent`: Number of concurrent crawls (default: 5)
-- `--output-dir`: Custom output directory (optional)
+- `--urls`: Path to file containing URLs (can be .txt with one URL per line or .json from menu crawler)
+- `--output-prefix`: Custom prefix for output markdown file (optional). If not specified, the prefix will be automatically generated from the first successfully crawled URL
 
-Example urls.txt:
+Output filename format:
+- Without `--output-prefix`: `domain_path_docs_content_timestamp.md` (e.g., `cloudflare_agents_docs_content_20240323_223656.md`)
+- With `--output-prefix`: `custom_prefix_docs_content_timestamp.md` (e.g., `custom_name_docs_content_20240323_223656.md`)
+
+The crawler accepts two types of input files:
+1. Text file with one URL per line:
 ```text
 https://docs.example.com/page1
 https://docs.example.com/page2
 https://docs.example.com/page3
+```
+
+2. JSON file (compatible with menu crawler output):
+```json
+{
+    "menu_links": [
+        "https://docs.example.com/page1",
+        "https://docs.example.com/page2"
+    ]
+}
 ```
 
 ### 3. Sitemap Crawler
@@ -173,7 +194,7 @@ Options:
 - `--url`: Documentation site URL
 - `--selectors`: Custom menu selectors (optional)
 
-Output format (JSON):
+The menu crawler now saves its output to the `input_files` directory, making it ready for immediate use with the multi-url crawler. The output JSON has this format:
 ```json
 {
     "start_url": "https://docs.example.com/",
@@ -185,25 +206,20 @@ Output format (JSON):
 }
 ```
 
-## Output Directory Structure
+After running the menu crawler, you'll get a command to run the multi-url crawler with the generated file.
+
+## Directory Structure
 
 ```
-scraped_docs/
-├── single/
-│   └── domain_path_timestamp.md
-├── multi/
-│   └── batch_timestamp/
-│       ├── page1.md
-│       ├── page2.md
-│       └── summary.json
-├── sitemap/
-│   └── domain_timestamp/
-│       ├── urls.json
-│       └── pages/
-│           ├── page1.md
-│           └── page2.md
-└── menu/
-    └── domain_menu_links_timestamp.json
+crawl4ai_docs_scraper/
+├── input_files/           # Input files for URL processing
+│   ├── urls.txt          # Text file with URLs
+│   └── menu_links.json   # JSON output from menu crawler
+├── scraped_docs/         # Output directory for markdown files
+│   └── docs_timestamp.md # Generated documentation
+├── multi_url_crawler.py
+├── menu_crawler.py
+└── requirements.txt
 ```
 
 ## Error Handling

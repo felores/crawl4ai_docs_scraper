@@ -35,4 +35,8 @@ ENV/
 
 # Scraped Docs - ignore contents but keep directory
 scraped_docs/*
-!scraped_docs/.gitkeep 
+!scraped_docs/.gitkeep
+
+# Input Files - ignore contents but keep directory
+input_files/*
+!input_files/.gitkeep 

@@ -13,7 +13,7 @@ import re
 
 # Constants
 BASE_URL = "https://developers.cloudflare.com/agents/"
-OUTPUT_DIR = "scraped_docs"
+INPUT_DIR = "input_files"  # Changed from OUTPUT_DIR
 MENU_SELECTORS = [
     # Traditional documentation selectors
     "nav a",                                  # General navigation links
@@ -269,9 +269,9 @@ class DocsMenuCrawler:
         )
         
         # Create output directory if it doesn't exist
-        if not os.path.exists(OUTPUT_DIR):
-            os.makedirs(OUTPUT_DIR)
-            print(colored(f"Created output directory: {OUTPUT_DIR}", "green"))
+        if not os.path.exists(INPUT_DIR):
+            os.makedirs(INPUT_DIR)
+            print(colored(f"Created output directory: {INPUT_DIR}", "green"))
 
     async def extract_all_menu_links(self) -> List[str]:
         """Extract all menu links from the main page, including nested menus."""
@@ -294,6 +294,11 @@ class DocsMenuCrawler:
 
                 links = set()
                 
+                # Add the base URL first (without trailing slash for consistency)
+                base_url = self.start_url.rstrip('/')
+                links.add(base_url)
+                print(colored(f"Added base URL: {base_url}", "green"))
+                
                 # Extract links from the result
                 if hasattr(result, 'extracted_content') and result.extracted_content:
                     try:
@@ -301,13 +306,27 @@ class DocsMenuCrawler:
                         for link in menu_links:
                             href = link.get('href', '')
                             text = link.get('text', '').strip()
-                            if href:
-                                # Convert relative URLs to absolute
-                                absolute_url = urljoin(self.start_url, href)
-                                # Only include internal documentation links
-                                if absolute_url.startswith(self.start_url):
-                                    links.add(absolute_url)
-                                    print(colored(f"Found link: {text} -> {absolute_url}", "green"))
+                            
+                            # Skip empty hrefs
+                            if not href:
+                                continue
+                                
+                            # Convert relative URLs to absolute
+                            absolute_url = urljoin(self.start_url, href)
+                            
+                            # Skip anchor links and ensure it's an internal doc link
+                            if (absolute_url.startswith(self.start_url) and 
+                                not href.startswith('#') and 
+                                '#' not in absolute_url):  # Removed base URL exclusion
+                                
+                                # Remove any trailing slashes for consistency
+                                absolute_url = absolute_url.rstrip('/')
+                                
+                                links.add(absolute_url)
+                                print(colored(f"Found link: {text} -> {absolute_url}", "green"))
+                            else:
+                                print(colored(f"Skipping anchor or external link: {text} -> {href}", "yellow"))
+                                
                     except json.JSONDecodeError as e:
                         print(colored(f"Error parsing extracted content: {str(e)}", "red"))
                 
@@ -319,18 +338,23 @@ class DocsMenuCrawler:
             return []
 
     def save_results(self, results: dict) -> str:
-        """Save crawling results to a JSON file using the same naming pattern as single_url_crawler."""
+        """Save crawling results to a JSON file in the input_files directory."""
         try:
+            # Create input_files directory if it doesn't exist
+            os.makedirs(INPUT_DIR, exist_ok=True)
+            
             # Generate filename using the same pattern
             filename_prefix = get_filename_prefix(self.start_url)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_menu_links_{timestamp}.json"
-            filepath = os.path.join(OUTPUT_DIR, filename)
+            filepath = os.path.join(INPUT_DIR, filename)
             
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2)
             
             print(colored(f"\n✓ Menu links saved to: {filepath}", "green"))
+            print(colored("\nTo crawl these URLs with multi_url_crawler.py, run:", "cyan"))
+            print(colored(f"python multi_url_crawler.py --urls {filename}", "yellow"))
             return filepath
             
         except Exception as e:
