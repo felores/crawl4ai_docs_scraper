@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 import re
+import argparse
 from datetime import datetime
 from termcolor import colored
 from crawl4ai import *
@@ -108,10 +109,14 @@ def save_markdown_content(content: str, url: str) -> str:
         return None
 
 async def main():
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Crawl a single URL and generate markdown documentation')
+    parser.add_argument('--url', type=str, required=True, help='Target documentation URL to crawl')
+    args = parser.parse_args()
+
     try:
         print(colored("\n=== Starting Single URL Crawl ===", "cyan"))
-        url = "https://developers.cloudflare.com/agents/model-context-protocol/"
-        print(colored(f"\nCrawling URL: {url}", "yellow"))
+        print(colored(f"\nCrawling URL: {args.url}", "yellow"))
         
         browser_config = BrowserConfig(headless=True, verbose=True)
         async with AsyncWebCrawler(config=browser_config) as crawler:
@@ -123,19 +128,20 @@ async def main():
             )
             
             result = await crawler.arun(
-                url=url,
+                url=args.url,
                 config=crawler_config
             )
             
             if result.success:
                 print(colored("\n✓ Successfully crawled URL", "green"))
                 print(colored(f"Content length: {len(result.markdown.raw_markdown)} characters", "cyan"))
-                save_markdown_content(result.markdown.raw_markdown, url)
+                save_markdown_content(result.markdown.raw_markdown, args.url)
             else:
                 print(colored(f"\n✗ Failed to crawl URL: {result.error_message}", "red"))
                 
     except Exception as e:
         print(colored(f"\n✗ Error during crawl: {str(e)}", "red"))
+        sys.exit(1)
 
 if __name__ == "__main__":
     asyncio.run(main())
