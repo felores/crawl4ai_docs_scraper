@@ -51,6 +51,7 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 - 📦 **Install globally** - use from any directory
 - 🎯 **Custom output directories** - save anywhere with `--output-dir`
 - 🔧 **Unified CLI** - single `crawl4ai` command for all modes
+- 🤖 **MCP Server** - AI agents can use tools directly via Model Context Protocol
 - 📑 Automatic nested menu expansion
 - 🔄 Handles dynamic content and lazy-loaded elements
 - 🎯 Configurable selectors
@@ -313,6 +314,41 @@ The menu crawler now saves its output to the `input_files` directory, making it 
 ```
 
 After running the menu crawler, you'll get a command to run the multi-url crawler with the generated file.
+
+## MCP Server for AI Agents
+
+The toolkit includes a **Model Context Protocol (MCP) server** that allows AI agents like Claude to use the crawling tools directly.
+
+### Quick Setup
+
+1. Install MCP dependencies:
+```bash
+pip install mcp
+```
+
+2. Configure in Claude Desktop (see [MCP_SERVER.md](MCP_SERVER.md) for details):
+```json
+{
+  "mcpServers": {
+    "crawl4ai": {
+      "command": "python",
+      "args": ["/absolute/path/to/crawl4ai_docs_scraper/crawl4ai_mcp.py"]
+    }
+  }
+}
+```
+
+### Available MCP Tools
+
+Once configured, AI agents can use these tools:
+
+- `crawl4ai_single_page` - Extract content from a single URL
+- `crawl4ai_extract_menu` - Extract all menu links from a site
+- `crawl4ai_batch_urls_split` - Crawl multiple URLs into individual files
+- `crawl4ai_batch_urls_consolidated` - Crawl multiple URLs into one file
+- `crawl4ai_from_sitemap` - Crawl from sitemap.xml
+
+See [MCP_SERVER.md](MCP_SERVER.md) for complete documentation and examples.
 
 ## Directory Structure
 
