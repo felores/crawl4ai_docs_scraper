@@ -4,6 +4,25 @@
 
 ---
 
+## Prerequisites
+
+Before using these commands, ensure crawl4ai is installed globally:
+
+**macOS/Linux (Recommended):**
+```bash
+cd /path/to/crawl4ai_docs_scraper
+pipx install -e .
+```
+
+**Verify installation:**
+```bash
+crawl4ai --help  # Should show available commands
+```
+
+If you see "command not found", the package is not installed globally. See [INSTALL.md](INSTALL.md).
+
+---
+
 ## Decision Tree: Which Command to Use?
 
 ```text

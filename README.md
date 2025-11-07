@@ -104,8 +104,19 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 
 Install globally to use the unified CLI from anywhere:
 
+**For macOS/Linux (using pipx - RECOMMENDED):**
 ```bash
-# Clone and install
+# Clone the repository
+git clone https://github.com/felores/crawl4ai_docs_scraper.git
+cd crawl4ai_docs_scraper
+
+# Install with pipx (creates isolated environment automatically)
+pipx install -e .
+```
+
+**For other systems (using pip in venv):**
+```bash
+# Clone and install in virtual environment
 git clone https://github.com/felores/crawl4ai_docs_scraper.git
 cd crawl4ai_docs_scraper
 pip install -e .
@@ -115,6 +126,7 @@ pip install -e .
 - ✅ `crawl4ai` - Unified command for all crawling modes
 - ✅ Individual commands: `crawl4ai-single`, `crawl4ai-menu`, `crawl4ai-split`, etc.
 - ✅ Works from any directory on your system
+- ✅ No need to activate virtual environments
 
 **Documentation:**
 - 📖 [INSTALL.md](INSTALL.md) - Complete installation guide

@@ -2,7 +2,32 @@
 
 ## Quick Install (Recommended)
 
-Install the package in development mode so you can use it from anywhere:
+### Option 1: Using pipx (macOS/Linux - RECOMMENDED)
+
+The easiest way to install on macOS/Linux systems with externally-managed Python:
+
+```bash
+# Install pipx if you don't have it (one-time setup)
+brew install pipx  # macOS
+# or: python3 -m pip install --user pipx  # Linux
+
+# Navigate to the repository
+cd /path/to/crawl4ai_docs_scraper
+
+# Install with pipx (creates isolated environment automatically)
+pipx install -e .
+```
+
+**Why pipx?**
+- ✅ No virtual environment activation needed
+- ✅ Works from any directory immediately
+- ✅ Avoids PEP 668 externally-managed-environment errors
+- ✅ Automatically manages isolated environments
+- ✅ Perfect for CLI tools like crawl4ai
+
+### Option 2: Using pip in Virtual Environment
+
+For systems that allow pip install or if you prefer traditional venv:
 
 ```bash
 # Navigate to the repository
@@ -12,7 +37,7 @@ cd /path/to/crawl4ai_docs_scraper
 pip install -e .
 ```
 
-This installs the package globally while keeping it linked to your source code. Any changes you make to the code will be immediately available.
+This installs the package while keeping it linked to your source code. Any changes you make to the code will be immediately available.
 
 ## Usage After Installation
 
