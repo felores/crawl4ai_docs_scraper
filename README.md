@@ -102,7 +102,7 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 
 ### Option 1: Install as Package (Recommended)
 
-Install globally to use from anywhere:
+Install globally to use the unified CLI from anywhere:
 
 ```bash
 # Clone and install
@@ -111,7 +111,12 @@ cd crawl4ai_docs_scraper
 pip install -e .
 ```
 
-Now use `crawl4ai` from any directory! See [INSTALL.md](INSTALL.md) for details.
+**After installation, you get:**
+- ✅ `crawl4ai` - Unified command for all crawling modes
+- ✅ Individual commands: `crawl4ai-single`, `crawl4ai-menu`, `crawl4ai-split`, etc.
+- ✅ Works from any directory on your system
+
+See [INSTALL.md](INSTALL.md) for complete installation guide.
 
 ### Option 2: Local Development
 
