@@ -36,6 +36,8 @@ setup(
 
     # Package discovery
     py_modules=[
+        'crawl4ai_cli',
+        'crawl4ai_mcp',
         'single_url_crawler',
         'multi_url_crawler',
         'split_url_crawler',
