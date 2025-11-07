@@ -38,17 +38,22 @@ Examples:
   # Extract single page
   crawl4ai single https://docs.example.com/page
 
+  # Extract single page to custom directory
+  crawl4ai single https://docs.example.com/page --output-dir ~/Desktop/docs
+
   # Extract menu links
   crawl4ai menu https://docs.example.com
 
-  # Crawl multiple URLs from file (individual files)
-  crawl4ai split urls.json --output-dir ~/Desktop/docs
+  # Crawl multiple URLs (individual files per page)
+  crawl4ai split urls.json --output-prefix my-project --output-dir ~/Desktop/docs
 
-  # Crawl multiple URLs (consolidated file)
-  crawl4ai multi urls.txt --output-prefix myproject
+  # Crawl multiple URLs (single consolidated file)
+  crawl4ai multi urls.txt --output-prefix myproject --output-dir ~/Desktop/docs
 
   # Crawl from sitemap
-  crawl4ai sitemap https://example.com/sitemap.xml
+  crawl4ai sitemap https://example.com/sitemap.xml --output-dir ~/Desktop/docs
+
+All commands support --output-dir to save files anywhere on your system.
 
 For more information, visit: https://github.com/felores/crawl4ai_docs_scraper
         """
