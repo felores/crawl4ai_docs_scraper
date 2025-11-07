@@ -84,18 +84,18 @@ def process_markdown_content(content: str, url: str) -> str:
     
     return f"{h1_line}\n\n## Source\n{url}\n\n{rest_of_content}"
 
-def save_markdown_content(content: str, url: str) -> str:
+def save_markdown_content(content: str, url: str, output_dir: str = "scraped_docs") -> str:
     """Save markdown content to a file"""
     try:
         # Generate filename prefix from URL
         filename_prefix = get_filename_prefix(url)
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{filename_prefix}_{timestamp}.md"
-        filepath = os.path.join("scraped_docs", filename)
-        
-        # Create scraped_docs directory if it doesn't exist
-        os.makedirs("scraped_docs", exist_ok=True)
+        filepath = os.path.join(output_dir, filename)
+
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
         processed_content = process_markdown_content(content, url)
         
@@ -112,6 +112,7 @@ async def main():
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Crawl a single URL and generate markdown documentation')
     parser.add_argument('url', type=str, help='Target documentation URL to crawl')
+    parser.add_argument('--output-dir', type=str, default='scraped_docs', help='Directory to save output files (default: scraped_docs)')
     args = parser.parse_args()
 
     try:
@@ -135,7 +136,7 @@ async def main():
             if result.success:
                 print(colored("\n✓ Successfully crawled URL", "green"))
                 print(colored(f"Content length: {len(result.markdown.raw_markdown)} characters", "cyan"))
-                save_markdown_content(result.markdown.raw_markdown, args.url)
+                save_markdown_content(result.markdown.raw_markdown, args.url, args.output_dir)
             else:
                 print(colored(f"\n✗ Failed to crawl URL: {result.error_message}", "red"))
                 

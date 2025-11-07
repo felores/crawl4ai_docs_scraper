@@ -65,14 +65,14 @@ def load_urls_from_file(file_path: str) -> List[str]:
         sys.exit(1)
 
 class MultiUrlCrawler:
-    def __init__(self, verbose: bool = True):
+    def __init__(self, output_dir: str = "scraped_docs", verbose: bool = True):
         self.browser_config = BrowserConfig(
             headless=True,
             verbose=True,
             viewport_width=800,
             viewport_height=600
         )
-        
+
         self.crawler_config = CrawlerRunConfig(
             cache_mode=CacheMode.BYPASS,
             markdown_generator=DefaultMarkdownGenerator(
@@ -83,7 +83,8 @@ class MultiUrlCrawler:
                 )
             ),
         )
-        
+
+        self.output_dir = output_dir
         self.verbose = verbose
         
     def process_markdown_content(self, content: str, url: str) -> str:
@@ -172,13 +173,13 @@ class MultiUrlCrawler:
                     filename_prefix = self.get_filename_prefix(first_url)
                 else:
                     filename_prefix = "docs"  # Fallback if no successful results
-            
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_{timestamp}.md"
-            filepath = os.path.join("scraped_docs", filename)
-            
-            # Create scraped_docs directory if it doesn't exist
-            os.makedirs("scraped_docs", exist_ok=True)
+            filepath = os.path.join(self.output_dir, filename)
+
+            # Create output directory if it doesn't exist
+            os.makedirs(self.output_dir, exist_ok=True)
             
             with open(filepath, "w", encoding="utf-8") as f:
                 for result in results:
@@ -256,20 +257,21 @@ async def main():
     parser = argparse.ArgumentParser(description='Crawl multiple URLs and generate markdown documentation')
     parser.add_argument('urls_file', type=str, help='Path to file containing URLs (either .txt or .json)')
     parser.add_argument('--output-prefix', type=str, help='Prefix for output markdown file (optional)')
+    parser.add_argument('--output-dir', type=str, default='scraped_docs', help='Directory to save output files (default: scraped_docs)')
     args = parser.parse_args()
 
     try:
         # Load URLs from file
         urls = load_urls_from_file(args.urls_file)
-        
+
         if not urls:
             print(colored("Error: No URLs found in the input file", "red"))
             sys.exit(1)
-            
+
         print(colored(f"Found {len(urls)} URLs to crawl", "green"))
-        
+
         # Initialize and run crawler
-        crawler = MultiUrlCrawler(verbose=True)
+        crawler = MultiUrlCrawler(output_dir=args.output_dir, verbose=True)
         results = await crawler.crawl(urls)
         
         # Save results to markdown file - only pass output_prefix if explicitly set

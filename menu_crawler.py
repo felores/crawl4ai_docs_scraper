@@ -203,9 +203,10 @@ def get_filename_prefix(url: str) -> str:
         return "default"
 
 class DocsMenuCrawler:
-    def __init__(self, start_url: str):
+    def __init__(self, start_url: str, output_dir: str = "input_files"):
         self.start_url = start_url
-        
+        self.output_dir = output_dir
+
         # Configure browser settings
         self.browser_config = BrowserConfig(
             headless=True,
@@ -213,7 +214,7 @@ class DocsMenuCrawler:
             viewport_height=1080,
             java_script_enabled=True  # Ensure JavaScript is enabled
         )
-        
+
         # Create extraction strategy for menu links
         extraction_schema = {
             "name": "MenuLinks",
@@ -241,7 +242,7 @@ class DocsMenuCrawler:
             ]
         }
         extraction_strategy = JsonCssExtractionStrategy(extraction_schema)
-        
+
         # Configure crawler settings with proper wait conditions
         self.crawler_config = CrawlerRunConfig(
             extraction_strategy=extraction_strategy,
@@ -257,11 +258,11 @@ class DocsMenuCrawler:
                 // Wait for sidebar and its content to be present
                 const sidebar = document.querySelector('[class*="sidebar"]');
                 if (!sidebar) return false;
-                
+
                 // Check if we have navigation items
                 const hasNavItems = sidebar.querySelectorAll('a').length > 0;
                 if (hasNavItems) return true;
-                
+
                 // If no nav items yet, check for loading indicators
                 const isLoading = document.querySelector('[class*="loading"]') !== null;
                 return !isLoading;  // Return true if not loading anymore
@@ -269,11 +270,11 @@ class DocsMenuCrawler:
             session_id="menu_crawler",  # Use a session to maintain state
             js_only=False  # We want full page load first
         )
-        
+
         # Create output directory if it doesn't exist
-        if not os.path.exists(INPUT_DIR):
-            os.makedirs(INPUT_DIR)
-            print(colored(f"Created output directory: {INPUT_DIR}", "green"))
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+            print(colored(f"Created output directory: {self.output_dir}", "green"))
 
     async def extract_all_menu_links(self) -> List[str]:
         """Extract all menu links from the main page, including nested menus."""
@@ -344,16 +345,16 @@ class DocsMenuCrawler:
             return []
 
     def save_results(self, results: dict) -> str:
-        """Save crawling results to a JSON file in the input_files directory."""
+        """Save crawling results to a JSON file in the output directory."""
         try:
-            # Create input_files directory if it doesn't exist
-            os.makedirs(INPUT_DIR, exist_ok=True)
-            
+            # Create output directory if it doesn't exist
+            os.makedirs(self.output_dir, exist_ok=True)
+
             # Generate filename using the same pattern
             filename_prefix = get_filename_prefix(self.start_url)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{filename_prefix}_menu_links_{timestamp}.json"
-            filepath = os.path.join(INPUT_DIR, filename)
+            filepath = os.path.join(self.output_dir, filename)
             
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2)
@@ -393,6 +394,7 @@ async def main():
     parser = argparse.ArgumentParser(description='Extract menu links from a documentation website')
     parser.add_argument('url', type=str, help='Documentation site URL to crawl')
     parser.add_argument('--selectors', type=str, nargs='+', help='Custom menu selectors (optional)')
+    parser.add_argument('--output-dir', type=str, default='input_files', help='Directory to save output files (default: input_files)')
     args = parser.parse_args()
 
     try:
@@ -404,7 +406,7 @@ async def main():
             global MENU_SELECTORS
             MENU_SELECTORS = args.selectors
 
-        crawler = DocsMenuCrawler(args.url)
+        crawler = DocsMenuCrawler(args.url, output_dir=args.output_dir)
         await crawler.crawl()
     except Exception as e:
         print(colored(f"Error in main: {str(e)}", "red"))

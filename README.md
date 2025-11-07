@@ -29,7 +29,8 @@ Traditional web scraping often gives you everything - including navigation menus
 
 3. **Flexible Crawling Strategies**
    - Single page for quick reference docs
-   - Multi-page for comprehensive library documentation
+   - Multi-page consolidated for comprehensive library documentation
+   - Split files for individual page management
    - Sitemap-based for complete framework coverage
    - Menu-based for structured documentation hierarchies
 
@@ -47,6 +48,9 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 
 ### Core Features
 - 🚀 Multiple crawling strategies
+- 📦 **Install globally** - use from any directory
+- 🎯 **Custom output directories** - save anywhere with `--output-dir`
+- 🔧 **Unified CLI** - single `crawl4ai` command for all modes
 - 📑 Automatic nested menu expansion
 - 🔄 Handles dynamic content and lazy-loaded elements
 - 🎯 Configurable selectors
@@ -65,17 +69,24 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 
 2. **Multi URL Crawler** (`multi_url_crawler.py`)
    - Processes multiple URLs in parallel
-   - Generates individual Markdown files per page
-   - Efficient batch processing
+   - Generates a single consolidated Markdown file
+   - All pages combined with separators
    - Shared browser session for better performance
 
-3. **Sitemap Crawler** (`sitemap_crawler.py`)
+3. **Split URL Crawler** (`split_url_crawler.py`) ⭐ NEW
+   - Processes multiple URLs from a file
+   - Generates individual Markdown files per URL
+   - Organized in subdirectories by project
+   - Perfect for maintaining separate documentation files
+   - Supports custom output prefixes
+
+4. **Sitemap Crawler** (`sitemap_crawler.py`)
    - Automatically discovers and crawls sitemap.xml
    - Creates Markdown files for each page
    - Supports recursive sitemap parsing
    - Handles gzipped sitemaps
 
-4. **Menu Crawler** (`menu_crawler.py`)
+5. **Menu Crawler** (`menu_crawler.py`)
    - Extracts all menu links from documentation
    - Outputs structured JSON format
    - Handles nested and dynamic menus
@@ -88,35 +99,78 @@ A comprehensive Python toolkit for scraping documentation websites using differe
 
 ## Installation
 
-1. Clone the repository:
+### Option 1: Install as Package (Recommended)
+
+Install globally to use from anywhere:
+
 ```bash
+# Clone and install
 git clone https://github.com/felores/crawl4ai_docs_scraper.git
 cd crawl4ai_docs_scraper
+pip install -e .
 ```
 
-2. Create and activate a virtual environment:
+Now use `crawl4ai` from any directory! See [INSTALL.md](INSTALL.md) for details.
+
+### Option 2: Local Development
+
+Use scripts directly without installation:
+
 ```bash
-python -m venv venv
+# Clone the repository
+git clone https://github.com/felores/crawl4ai_docs_scraper.git
+cd crawl4ai_docs_scraper
+
+# Create and activate virtual environment
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
 
-3. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
 ## Usage
 
+### Unified CLI (After Installation)
+
+If you installed as a package, use the unified `crawl4ai` command:
+
+```bash
+# Extract single page
+crawl4ai single https://docs.example.com/page
+
+# Save to custom directory
+crawl4ai single https://docs.example.com/page --output-dir ~/Desktop/docs
+
+# Extract menu links
+crawl4ai menu https://docs.example.com
+
+# Crawl multiple URLs (individual files)
+crawl4ai split urls.json --output-dir ~/Desktop/my-docs
+
+# Crawl multiple URLs (consolidated file)
+crawl4ai multi urls.txt --output-prefix myproject
+
+# Crawl from sitemap
+crawl4ai sitemap https://example.com/sitemap.xml
+```
+
+### Direct Script Usage
+
+If using scripts directly (without installation):
+
 ### 1. Single URL Crawler
 
 ```bash
 python single_url_crawler.py https://docs.example.com/page
+
+# Save to custom directory
+python single_url_crawler.py https://docs.example.com/page --output-dir ~/Desktop/docs
 ```
 
 Arguments:
-- URL: Target documentation URL (required, first argument)
-
-Note: Use quotes only if your URL contains special characters or spaces.
+- `url`: Target documentation URL (required)
+- `--output-dir`: Directory to save output files (default: `scraped_docs`)
 
 Output format (Markdown):
 ```markdown
@@ -143,15 +197,16 @@ python multi_url_crawler.py urls.txt
 # Using JSON output from menu crawler
 python multi_url_crawler.py menu_links.json
 
-# Using custom output prefix
-python multi_url_crawler.py menu_links.json --output-prefix custom_name
+# Using custom output prefix and directory
+python multi_url_crawler.py menu_links.json --output-prefix custom_name --output-dir ~/Desktop/docs
 ```
 
 Arguments:
-- URLs file: Path to file containing URLs (required, first argument)
+- `urls_file`: Path to file containing URLs (required)
   - Can be .txt with one URL per line
   - Or .json from menu crawler output
 - `--output-prefix`: Custom prefix for output markdown file (optional)
+- `--output-dir`: Directory to save output files (default: `scraped_docs`)
 
 Note: Use quotes only if your file path contains spaces.
 
@@ -177,24 +232,73 @@ https://docs.example.com/page3
 }
 ```
 
-### 3. Sitemap Crawler
+### 3. Split URL Crawler
+
+```bash
+# Using a text file with URLs
+python split_url_crawler.py urls.txt
+
+# Using JSON output from menu crawler
+python split_url_crawler.py menu_links.json
+
+# Using custom output prefix and base directory
+python split_url_crawler.py menu_links.json --output-prefix my-project --output-dir ~/Desktop/docs
+```
+
+Arguments:
+- `urls_file`: Path to file containing URLs (required)
+  - Can be .txt with one URL per line
+  - Or .json from menu crawler output
+- `--output-prefix`: Custom prefix for output directory name (optional)
+- `--output-dir`: Base directory to save output files (default: `scraped_docs`)
+
+**Key Differences from Multi URL Crawler:**
+- Creates **individual .md files** for each URL (not a single consolidated file)
+- Files organized in **project subdirectories**: `scraped_docs/{project}_{timestamp}/`
+- Filenames based on URL structure (e.g., `literalai_docs_authentication.md`)
+- Perfect for maintaining separate documentation files
+
+**Output Structure:**
+```text
+scraped_docs/
+  └── literalai_20250106_120000/
+      ├── literalai_docs_getting_started.md
+      ├── literalai_docs_api_authentication.md
+      └── literalai_docs_advanced_features.md
+```
+
+**When to Use:**
+- Use **split_url_crawler.py** when you want individual files for each page (easier to navigate, version control friendly)
+- Use **multi_url_crawler.py** when you want a single consolidated document (better for LLM context or offline reading)
+
+### 4. Sitemap Crawler
 
 ```bash
 python sitemap_crawler.py https://docs.example.com/sitemap.xml
+
+# With custom directory and filters
+python sitemap_crawler.py https://docs.example.com/sitemap.xml --max-depth 5 --patterns "/docs/*" --output-dir ~/Desktop/docs
 ```
 
-Options:
-- `--max-depth`: Maximum sitemap recursion depth (optional)
-- `--patterns`: URL patterns to include (optional)
+Arguments:
+- `sitemap_url`: URL of sitemap.xml (required)
+- `--max-depth`: Maximum sitemap recursion depth (default: 10)
+- `--patterns`: URL patterns to include (e.g., "/docs/*" "/guide/*")
+- `--output-dir`: Directory to save output files (default: `scraped_docs`)
 
-### 4. Menu Crawler
+### 5. Menu Crawler
 
 ```bash
 python menu_crawler.py https://docs.example.com
+
+# Save to custom directory
+python menu_crawler.py https://docs.example.com --output-dir ~/Desktop/menu_data
 ```
 
-Options:
-- `--selectors`: Custom menu selectors (optional)
+Arguments:
+- `url`: Documentation site URL (required)
+- `--selectors`: Custom CSS selectors for menu items (optional)
+- `--output-dir`: Directory to save output files (default: `input_files`)
 
 The menu crawler now saves its output to the `input_files` directory, making it ready for immediate use with the multi-url crawler. The output JSON has this format:
 ```json
@@ -212,14 +316,21 @@ After running the menu crawler, you'll get a command to run the multi-url crawle
 
 ## Directory Structure
 
-```
+```bash
 crawl4ai_docs_scraper/
-├── input_files/           # Input files for URL processing
-│   ├── urls.txt          # Text file with URLs
-│   └── menu_links.json   # JSON output from menu crawler
-├── scraped_docs/         # Output directory for markdown files
-│   └── docs_timestamp.md # Generated documentation
+├── input_files/              # Input files for URL processing
+│   ├── urls.txt             # Text file with URLs
+│   └── menu_links.json      # JSON output from menu crawler
+├── scraped_docs/            # Output directory for markdown files
+│   ├── docs_timestamp.md    # Single consolidated file (multi_url_crawler)
+│   └── project_timestamp/   # Subdirectory with individual files (split_url_crawler)
+│       ├── page1.md
+│       ├── page2.md
+│       └── page3.md
+├── single_url_crawler.py
 ├── multi_url_crawler.py
+├── split_url_crawler.py
+├── sitemap_crawler.py
 ├── menu_crawler.py
 └── requirements.txt
 ```

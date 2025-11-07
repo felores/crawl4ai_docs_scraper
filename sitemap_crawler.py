@@ -13,14 +13,14 @@ from crawl4ai.content_filter_strategy import PruningContentFilter
 from termcolor import colored
 
 class MultiUrlCrawler:
-    def __init__(self, verbose: bool = True):
+    def __init__(self, output_dir: str = "scraped_docs", verbose: bool = True):
         self.browser_config = BrowserConfig(
             headless=True,
             verbose=True,
             viewport_width=800,
             viewport_height=600
         )
-        
+
         self.crawler_config = CrawlerRunConfig(
             cache_mode=CacheMode.BYPASS,
             markdown_generator=DefaultMarkdownGenerator(
@@ -31,7 +31,8 @@ class MultiUrlCrawler:
                 )
             ),
         )
-        
+
+        self.output_dir = output_dir
         self.verbose = verbose
 
     async def fetch_sitemap(self, sitemap_url: str) -> List[str]:
@@ -125,10 +126,10 @@ class MultiUrlCrawler:
         """Save all markdown content to a single file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{filename_prefix}_{timestamp}.md"
-        filepath = os.path.join("scraped_docs", filename)
-        
-        # Create scraped_docs directory if it doesn't exist
-        os.makedirs("scraped_docs", exist_ok=True)
+        filepath = os.path.join(self.output_dir, filename)
+
+        # Create output directory if it doesn't exist
+        os.makedirs(self.output_dir, exist_ok=True)
         
         with open(filepath, "w", encoding="utf-8") as f:
             for result in results:
@@ -252,13 +253,14 @@ async def main():
     parser.add_argument('sitemap_url', type=str, help='URL of the sitemap (e.g., https://docs.example.com/sitemap.xml)')
     parser.add_argument('--max-depth', type=int, default=10, help='Maximum sitemap recursion depth')
     parser.add_argument('--patterns', type=str, nargs='+', help='URL patterns to include (e.g., "/docs/*" "/guide/*")')
+    parser.add_argument('--output-dir', type=str, default='scraped_docs', help='Directory to save output files (default: scraped_docs)')
     args = parser.parse_args()
 
     try:
         print(colored(f"\nFetching sitemap: {args.sitemap_url}", "cyan"))
-        
+
         # Initialize crawler
-        crawler = MultiUrlCrawler(verbose=True)
+        crawler = MultiUrlCrawler(output_dir=args.output_dir, verbose=True)
         
         # Fetch URLs from sitemap
         urls = await crawler.fetch_sitemap(args.sitemap_url)
