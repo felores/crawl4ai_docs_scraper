@@ -116,7 +116,10 @@ pip install -e .
 - ✅ Individual commands: `crawl4ai-single`, `crawl4ai-menu`, `crawl4ai-split`, etc.
 - ✅ Works from any directory on your system
 
-See [INSTALL.md](INSTALL.md) for complete installation guide.
+**Documentation:**
+- 📖 [INSTALL.md](INSTALL.md) - Complete installation guide
+- 🤖 [AGENT_GUIDE.md](AGENT_GUIDE.md) - Quick reference for AI agents
+- 🔌 [MCP_SERVER.md](MCP_SERVER.md) - MCP server setup and usage
 
 ### Option 2: Local Development
 
